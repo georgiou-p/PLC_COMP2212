@@ -24,16 +24,19 @@ readCSV path = do
   return $ map parseLine $ lines content
   where
     parseLine :: String -> Row
-    parseLine line = map trim $ splitOn ',' line
+    parseLine line = splitOn ',' line
 
     splitOn :: Char -> String -> [String]
-    splitOn c s = case dropWhile (== c) s of
-      "" -> []
-      s' -> w : splitOn c s''
-        where (w, s'') = break (== c) s'
+    splitOn _ "" = [""]  -- Handle empty line case
+    splitOn delim s = 
+        let (token, rest) = break (== delim) s
+        in token : if null rest 
+                  then [] 
+                  else splitOn delim (tail rest)
 
     trim :: String -> String
-    trim = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
+    trim "" = ""  -- Keep empty strings as is
+    trim s = reverse $ dropWhile (== ' ') $ reverse $ dropWhile (== ' ') s
 
 -- Write a table to a CSV file
 writeCSV :: FilePath -> Table -> IO ()
@@ -169,15 +172,17 @@ evaluateQuery query = case query of
         tables1 = cartesianProduct $ map (\s -> fromMaybe [] $ Map.lookup (sourceName s) env) sources1
         tables2 = cartesianProduct $ map (\s -> fromMaybe [] $ Map.lookup (sourceName s) env) sources2
 
-        emptyRow2 = if null tables2 then [] else replicate (length (head tables2)) ""
+        emptyRow2 = if null tables2 then [] else map (const "") (head tables2)
         tableIndices = Map.fromList $ zip (map sourceName (sources1 ++ sources2)) [0..]
         
         -- For each row in tables1, find matching rows in tables2 according to condition
         mergedRows = concatMap (\row1 -> 
             let matches = filter (\row2 -> evalCondition env tableIndices (row1 ++ row2) condition) tables2
             in if null matches
-               then [row1 ++ emptyRow2]
-               else map (\row2 -> mergeRows row1 row2) matches
+              then if null tables2 
+                    then []  -- If Q is empty, don't include P rows (or include based on your semantics)
+                    else [row1 ++ emptyRow2]  -- LEFT MERGE: keep P row with null Q values
+              else map (\row2 -> mergeRows row1 row2) matches
           ) tables1
         
         -- Extract selected columns
@@ -284,7 +289,10 @@ sourceName (SourceTable name) = name
 mergeRows :: Row -> Row -> Row
 mergeRows row1 row2 = zipWith mergeValue row1 row2
   where
-    mergeValue v1 v2 = if v1 == "" then v2 else v1
+    mergeValue v1 v2 
+      | v1 == "" && v2 == "" = ""
+      | v1 == "" = v2
+      | otherwise = v1
 
 -- Sort rows lexicographically
 lexicographicSort :: Row -> Row -> Ordering

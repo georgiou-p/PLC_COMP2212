@@ -69,7 +69,14 @@ runFile filename = do
 -- Convert a table to a string representation
 tableToString :: Table -> String
 tableToString [] = "Empty result"
-tableToString table = unlines $ map (intercalate ",") table
+tableToString table = unlines $ map formatRow table
+  where
+    formatRow :: Row -> String
+    formatRow = intercalate "," . map preserveEmpty
+    
+    preserveEmpty :: String -> String
+    preserveEmpty "" = ""
+    preserveEmpty s = s
 
 -- Implementation of the task examples
 
