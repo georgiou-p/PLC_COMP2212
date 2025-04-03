@@ -166,29 +166,32 @@ evaluateQuery query = case query of
     return $ sortBy lexicographicSort resultTable
   
   LeftMerge selectExprs sources1 sources2 condition -> do
-    env1 <- loadSources sources1
-    env2 <- loadSources sources2
-    let env = Map.union env1 env2
-        tables1 = cartesianProduct $ map (\s -> fromMaybe [] $ Map.lookup (sourceName s) env) sources1
-        tables2 = cartesianProduct $ map (\s -> fromMaybe [] $ Map.lookup (sourceName s) env) sources2
+      env1 <- loadSources sources1
+      env2 <- loadSources sources2
+      let env = Map.union env1 env2
+          table1 = cartesianProduct $ map (\s -> fromMaybe [] $ Map.lookup (sourceName s) env) sources1
+          table2 = cartesianProduct $ map (\s -> fromMaybe [] $ Map.lookup (sourceName s) env) sources2
 
-        emptyRow2 = if null tables2 then [] else map (const "") (head tables2)
-        tableIndices = Map.fromList $ zip (map sourceName (sources1 ++ sources2)) [0..]
-        
-        -- For each row in tables1, find matching rows in tables2 according to condition
-        mergedRows = concatMap (\row1 -> 
-            let matches = filter (\row2 -> evalCondition env tableIndices (row1 ++ row2) condition) tables2
-            in if null matches
-              then if null tables2 
-                    then []  -- If Q is empty, don't include P rows (or include based on your semantics)
-                    else [row1 ++ emptyRow2]  -- LEFT MERGE: keep P row with null Q values
-              else map (\row2 -> mergeRows row1 row2) matches
-          ) tables1
-        
-        -- Extract selected columns
-        resultTable = map (\row -> extractColumns env tableIndices row selectExprs) mergedRows
-    
-    return $ sortBy lexicographicSort resultTable
+          -- Build table indices mapping
+          tableIndices = Map.fromList $ zip (map sourceName (sources1 ++ sources2)) [0..]
+          
+          -- For each row in table1, find matching rows in table2 according to condition
+          mergedRows = concatMap (\row1 -> 
+              let matches = filter (\row2 -> 
+                      let combinedRow = row1 ++ row2
+                          -- Update indices to account for table1 and table2
+                          updatedIndices = Map.insert (sourceName (head sources2)) (length sources1) tableIndices
+                      in evalCondition env updatedIndices combinedRow condition
+                    ) table2
+              in if null matches
+                then []  -- No match: exclude this table1 row (different from standard LEFT JOIN)
+                else map (\row2 -> row1 ++ row2) matches  -- Match: include table1 row combined with table2 rows
+            ) table1
+          
+          -- Extract selected columns
+          resultTable = map (\row -> extractColumns env tableIndices row selectExprs) mergedRows
+      
+      return $ sortBy lexicographicSort resultTable
   
   PermuteCols sources col1 col2 -> do
     env <- loadSources sources
