@@ -30,7 +30,7 @@ readCSV path = do
     splitOn _ "" = [""]  -- Handle empty line case
     splitOn delim s = 
         let (token, rest) = break (== delim) s
-        in token : if null rest 
+        in trim token : if null rest 
                   then [] 
                   else splitOn delim (tail rest)
 
