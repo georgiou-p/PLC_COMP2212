@@ -275,6 +275,219 @@ You are required to submit two files by 4pm on Thu 15th May, as follows:
     a zip file containing five programs, written in your language, that solve the five tasks below. The programs should be in files named t6.cql, t7.cql, t8.cql, t9.cql and t10.cql.
 
 Each task in Submission 2 will be worth 5% of the overall coursework mark (i.e. 2% of the module mark). The language manual will be worth 25% of the overall coursework mark (i.e. 10% of the module mark).
-Tasks TBA
+Manual
 
-The tasks in Submission 2 will be generalisations or combinations of tasks in Submission 1, or will be reasonable extensions from those tasks.
+The exact structure is up to you, but I would expect the following as a bare minimum:
+
+    A description of the syntax of your language, with examples.
+    Descriptions of any built-in commands or functions
+    A rationale for your language - why did you design and implement it the way you have?
+    A list of references that have influenced the design of your language
+
+You should make sure to document all features of your language that go beyond what's strictly required by the given tasks. Examples of these extension features might include:
+
+    A type system for your language
+    Error handling
+    File output
+    Syntax highlighting for your language in your chosen IDE
+
+(note that this is not an exhaustive list)
+
+The word limit is 2500 words. I will not count code examples or references towards that limit.
+Tasks
+Task 6: Multiway Cartesian Product
+
+Assume five inputs P:3, Q:3, R:1, S:1 and T:4. Your program should output the cartesian product of the five files so that each output row is created from the combination of rows from each of P, Q, R, S and T. The entries should appear in the output in the following order: for each row p1, p2, p3 in P, each row q1, q2, q3 in Q, each row r1 in R, each row s1 in S and each row t1, t2, t3, t4 in T, output a row p1, p2, p3, q1, q2, q3, r1, s1, t1, t2, t3, t4. The output arity is 12.
+Example
+
+P.csv:
+
+    1,2,3
+    4,5,6
+    7,8,9
+
+Q.csv:
+
+    foo,bar,baz
+    baz,qux,quux
+
+R.csv:
+
+    aardvark
+
+S.csv:
+
+    23
+
+T.csv:
+
+    a,b,c,d
+
+Output:
+
+    1,2,3,baz,qux,quux,aardvark,23,a,b,c,d
+    1,2,3,foo,bar,baz,aardvark,23,a,b,c,d
+    4,5,6,baz,qux,quux,aardvark,23,a,b,c,d
+    4,5,6,foo,bar,baz,aardvark,23,a,b,c,d
+    7,8,9,baz,qux,quux,aardvark,23,a,b,c,d
+    7,8,9,foo,bar,baz,aardvark,23,a,b,c,d
+
+Task 7: Paired Composition
+
+Assume two input symbols F:3 and G:3 both of arity three. Your program should output the composition of the relations represented by F and G as follows: for each row f1, f2, f3 in F and each row g1, g2, g3 in G, output a row containing f1, g3 if and only if both of f2 and f3 are non-empty, f2=g1 and f3=g2. The output arity is 2.
+Example
+
+F.csv:
+
+    a,b,c
+    d,e,
+    g,h,i
+    j,k,l
+
+G.csv:
+
+    b,c,d
+    b,c,e
+    h,,i
+    k,l,
+    k,l,l
+
+Output:
+
+    a,d
+    a,e
+    j,
+    j,l
+
+Task 8: Right Merge on Last Column
+
+Assume two inputs P:4 and Q:4. Your program should output rows as follows: for each row p1, p2, p3, p4 in P and each row q1, q2, q3, q4 in Q such that p4=q4, the output should contain a row r1, r2, r3, q4 where ri is pi if qi is empty and qi otherwise. The output arity is 4.
+Example 1
+
+P.csv:
+
+    ,4,5,1
+    ,2,,2
+    2,1,7,3
+    ,1,8,4
+
+Q.csv:
+
+    7,4,6,1
+    3,5,8,2
+    1,,,2
+    3,2,,4
+
+Output:
+
+    1,2,,2
+    3,2,8,4
+    3,5,8,2
+    7,4,6,1
+
+Example 2
+
+P.csv:
+
+    Aaron,foo,,qux
+    Brenda,,bar,quux
+
+Q.csv:
+
+    Ciara,bar,,quux
+    Aaron,,baz,qux
+
+Output:
+
+    Aaron,foo,baz,qux
+    Ciara,bar,bar,quux
+
+Example 3
+
+P.csv:
+
+    1,6,2,3
+    2,7,4,5
+
+Q.csv:
+
+    3,8,6,6
+    4,9,5,3
+
+Output:
+
+    4,9,5,3
+
+Task 9: Paths of length three
+
+Assume a single input R:2. Your program should compute all paths of length 3 in the relation represented by R. A path of length 3 in R is a sequence r1, r2, r3, r4 such that r1, r2 is a row in R, r2, r3 is a row in R and r3, r4 is a row in R. For each such path of length 3, the output should contain a row r1, r4.
+
+Example 1
+
+R.csv:
+
+    Romsey,Eastleigh
+    Eastleigh,Southampton Airport Parkway
+    Southampton Airport Parkway,Southampton Central
+    Southampton Central,Romsey
+    Romsey, Salisbury
+
+Output:
+
+    Eastleigh,Romsey
+    Romsey,Southampton Central
+    Southampton Airport Parkway,Eastleigh
+    Southampton Airport Parkway,Salisbury
+    Southampton Central,Southampton Airport Parkway
+
+Example 2
+
+R.csv:
+
+    foo,foo
+
+Outout:
+
+    foo,foo
+
+Task 10: Matching Pairs
+
+Assume two inputs S:3 and T:3. Your program should compute the output as follows: for each row s1, s2, s3 in S and each row t1, t2, t3 in T , output s3, t1 if s1=s2 and t2=t3.
+Example 1
+
+S.csv:
+
+    A,A,B
+    A,B,B
+    A,B,C
+
+T.csv:
+
+    A,A,B
+    A,B,B
+    A,B,C
+    C,D,D
+
+Output:
+
+    B,A
+    B,C
+
+Example 2
+
+S.csv:
+
+    A,B,B
+    B,C,D
+    ,,
+
+T.csv:
+
+    B,B,B
+    B,C,D
+    A,,
+
+Output:
+
+    ,A
+    ,B
